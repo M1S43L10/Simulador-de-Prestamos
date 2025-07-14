@@ -1,3 +1,5 @@
+document.addEventListener('DOMContentLoaded', initSimulador);
+
 function initSimulador() {
     cargarHistorial();
     setupEventListeners();
@@ -8,18 +10,21 @@ function setupEventListeners() {
     const $form = document.getElementById('prestamo-form');
     const $limpiarBtn = document.getElementById('limpiar-btn');
     const $compararBtn = document.getElementById('comparar-btn');
+    const $verHistorialBtn = document.getElementById('ver-historial-btn');
+    const $vaciarHistorialBtn = document.getElementById('vaciar-historial-btn');
     const $tasaSlider = document.getElementById('tasa');
 
     if ($form) $form.addEventListener('submit', handleSubmit);
     if ($limpiarBtn) $limpiarBtn.addEventListener('click', limpiarDatos);
     if ($compararBtn) $compararBtn.addEventListener('click', compararEscenarios);
+    if ($verHistorialBtn) $verHistorialBtn.addEventListener('click', verHistorial);
+    if ($vaciarHistorialBtn) $vaciarHistorialBtn.addEventListener('click', vaciarHistorial);
     if ($tasaSlider) $tasaSlider.addEventListener('input', updateTasaValue);
 }
 
 
 function handleSubmit(e) {
     e.preventDefault();
-
 
     const datosForm = obtenerDatosFormulario();
 
@@ -29,6 +34,15 @@ function handleSubmit(e) {
 
         mostrarResultados(resumen, amortizacion);
         guardarSimulacion(resumen);
+
+        // ✅ Mostrar Toastify sólo si se simula correctamente
+        Toastify({
+            text: "¡Simulación realizada con éxito!",
+            duration: 3000,
+            gravity: "top",
+            position: "right",
+            backgroundColor: "#28a745"
+        }).showToast();
     }
 }
 
@@ -68,13 +82,10 @@ function validarDatos(datos) {
     return true;
 }
 
-
 function generarAmortizacion(datos) {
     const { monto, plazo, tasa, periodoGracia, seguro, pagoExtra } = datos;
     const tasaMensual = tasa / 12 / 100;
     let saldo = monto;
-    const amortizacion = [];
-
 
     return Array.from({ length: plazo }).map((_, mes) => {
         const mesActual = mes + 1;
@@ -122,7 +133,6 @@ function calcularResumen(amortizacion, datos) {
     };
 }
 
-
 function mostrarResultados(resumen, amortizacion) {
     mostrarResumen(resumen);
     mostrarAmortizacion(amortizacion);
@@ -130,7 +140,6 @@ function mostrarResultados(resumen, amortizacion) {
 
 function mostrarResumen(resumen) {
     const $resumenContainer = document.getElementById('resumen-container');
-
     if (!$resumenContainer) return;
 
     $resumenContainer.innerHTML = `
@@ -138,13 +147,13 @@ function mostrarResumen(resumen) {
       <h3>Resumen del Préstamo</h3>
       <div class="resumen-grid">
         ${Object.entries({
-        'Monto solicitado': `$${resumen.monto.toLocaleString()}`,
-        'Plazo': `${resumen.plazo} meses`,
-        'Tasa anual': `${resumen.tasa}%`,
-        'Cuota estimada': `$${resumen.cuotaPromedio?.toLocaleString() || calcularCuota(resumen.monto, resumen.plazo, resumen.tasa / 12 / 100, resumen.periodoGracia).toLocaleString()}`,
-        'Total a pagar': `$${resumen.totalPagado.toLocaleString()}`,
-        'Intereses totales': `$${resumen.totalIntereses.toLocaleString()}`
-    }).map(([key, value]) => `
+            'Monto solicitado': `$${resumen.monto.toLocaleString()}`,
+            'Plazo': `${resumen.plazo} meses`,
+            'Tasa anual': `${resumen.tasa}%`,
+            'Cuota estimada': `$${resumen.cuotaPromedio?.toLocaleString() || calcularCuota(resumen.monto, resumen.plazo, resumen.tasa / 12 / 100, resumen.periodoGracia).toLocaleString()}`,
+            'Total a pagar': `$${resumen.totalPagado.toLocaleString()}`,
+            'Intereses totales': `$${resumen.totalIntereses.toLocaleString()}`
+        }).map(([key, value]) => `
           <div class="resumen-item">
             <span>${key}:</span>
             <span>${value}</span>
@@ -157,9 +166,7 @@ function mostrarResumen(resumen) {
 
 function mostrarAmortizacion(amortizacion) {
     const $amortizacionContainer = document.getElementById('amortizacion-container');
-
     if (!$amortizacionContainer) return;
-
 
     const mesesMostrar = [
         ...amortizacion.slice(0, 5),
@@ -182,18 +189,18 @@ function mostrarAmortizacion(amortizacion) {
         </thead>
         <tbody>
           ${mesesMostrar.map(fila =>
-        fila.mes === '...' ?
-            '<tr><td colspan="5" class="separator">...</td></tr>' :
-            `
-              <tr>
-                <td>${fila.mes}</td>
-                <td>$${fila.cuotaTotal.toFixed(2)}</td>
-                <td>$${fila.capital.toFixed(2)}</td>
-                <td>$${fila.interes.toFixed(2)}</td>
-                <td>$${fila.saldoRestante.toFixed(2)}</td>
-              </tr>
-              `
-    ).join('')}
+            fila.mes === '...' ?
+                '<tr><td colspan="5" class="separator">...</td></tr>' :
+                `
+                  <tr>
+                    <td>${fila.mes}</td>
+                    <td>$${fila.cuotaTotal.toFixed(2)}</td>
+                    <td>$${fila.capital.toFixed(2)}</td>
+                    <td>$${fila.interes.toFixed(2)}</td>
+                    <td>$${fila.saldoRestante.toFixed(2)}</td>
+                  </tr>
+                `
+        ).join('')}
         </tbody>
       </table>
       <button id="exportar-btn" class="btn secondary">Exportar a CSV</button>
@@ -201,11 +208,9 @@ function mostrarAmortizacion(amortizacion) {
     </div>
   `;
 
-
     document.getElementById('exportar-btn')?.addEventListener('click', () => exportarACSV(amortizacion));
     document.getElementById('ver-completa-btn')?.addEventListener('click', () => mostrarTablaCompleta(amortizacion));
 }
-
 
 function guardarSimulacion(resumen) {
     const historial = obtenerHistorial();
@@ -228,28 +233,44 @@ function compararEscenarios() {
     const historial = obtenerHistorial().slice(-2);
 
     if (historial.length < 2) {
-        mostrarErrores(['Necesitas al menos 2 préstamos simulados para comparar.']);
+        mostrarErrores(['Necesitás al menos 2 préstamos simulados para comparar.']);
         return;
     }
 
-    const $comparacionContainer = document.getElementById('comparacion-container');
+    const rows = ['totalPagado', 'totalIntereses', 'costoTotalSeguro'].map(key => {
+        return `
+          <tr>
+            <td><strong>${formatKey(key)}</strong></td>
+            <td>$${historial[0][key]?.toLocaleString() || 'N/A'}</td>
+            <td>$${historial[1][key]?.toLocaleString() || 'N/A'}</td>
+          </tr>
+        `;
+    }).join('');
 
-    $comparacionContainer.innerHTML = `
-    <div class="comparacion-card">
-      <h3>Comparación de Escenarios</h3>
-      <div class="comparacion-grid">
-        <div class="comparacion-header"></div>
-        <div class="comparacion-header">Préstamo 1</div>
-        <div class="comparacion-header">Préstamo 2</div>
-        
-        ${['totalPagado', 'totalIntereses', 'costoTotalSeguro'].map(item => `
-          <div class="comparacion-item">${formatKey(item)}</div>
-          <div>$${historial[0][item]?.toLocaleString() || 'N/A'}</div>
-          <div>$${historial[1][item]?.toLocaleString() || 'N/A'}</div>
-        `).join('')}
-      </div>
-    </div>
-  `;
+    Swal.fire({
+        title: 'Comparación de Escenarios',
+        html: `
+          <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+              <thead class="table-success">
+                <tr>
+                  <th>Concepto</th>
+                  <th>Préstamo 1</th>
+                  <th>Préstamo 2</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rows}
+              </tbody>
+            </table>
+          </div>
+        `,
+        width: '60%',
+        confirmButtonText: 'Cerrar',
+        customClass: {
+            popup: 'swal-wide'
+        }
+    });
 }
 
 
@@ -263,27 +284,36 @@ function updateTasaValue() {
 }
 
 function limpiarDatos() {
-    const $form = document.getElementById('prestamo-form');
-    const $resumenContainer = document.getElementById('resumen-container');
-    const $amortizacionContainer = document.getElementById('amortizacion-container');
-    const $comparacionContainer = document.getElementById('comparacion-container');
+    Swal.fire({
+        title: "¿Estás seguro?",
+        text: "Se borrarán todos los datos del formulario.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Sí, borrar"
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const $form = document.getElementById('prestamo-form');
+            const $resumenContainer = document.getElementById('resumen-container');
+            const $amortizacionContainer = document.getElementById('amortizacion-container');
+            const $comparacionContainer = document.getElementById('comparacion-container');
 
-    if ($form) $form.reset();
-    if ($resumenContainer) $resumenContainer.innerHTML = '';
-    if ($amortizacionContainer) $amortizacionContainer.innerHTML = '';
-    if ($comparacionContainer) $comparacionContainer.innerHTML = '';
+            if ($form) $form.reset();
+            if ($resumenContainer) $resumenContainer.innerHTML = '';
+            if ($amortizacionContainer) $amortizacionContainer.innerHTML = '';
+            if ($comparacionContainer) $comparacionContainer.innerHTML = '';
 
-    updateTasaValue();
+            updateTasaValue();
+        }
+    });
 }
 
 function mostrarErrores(errores) {
     const $resultados = document.getElementById('resultados');
-
     if (!$resultados) return;
 
-    const erroresHTML = errores.map(error => `
-    <div class="error">${error}</div>
-  `).join('');
+    const erroresHTML = errores.map(error => `<div class="error">${error}</div>`).join('');
 
     $resultados.insertAdjacentHTML('afterbegin', `
     <div class="alert alert-danger">
@@ -292,18 +322,14 @@ function mostrarErrores(errores) {
     </div>
   `);
 
-
     setTimeout(() => {
         const $alert = document.querySelector('.alert');
         if ($alert) $alert.remove();
     }, 5000);
 }
 
-
 function mostrarTablaCompleta(amortizacion) {
-
     const ventana = window.open('', '_blank', 'width=1000,height=600,scrollbars=yes');
-
 
     const html = `
     <!DOCTYPE html>
@@ -311,13 +337,86 @@ function mostrarTablaCompleta(amortizacion) {
     <head>
       <title>Tabla de Amortización Completa</title>
       <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        h1 { color: #2c3e50; text-align: center; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #4CAF50; color: white; }
-        tr:nth-child(even) { background-color: #f2f2f2; }
-        .total-row { font-weight: bold; background-color: #e1f5fe !important; }
+        :root {
+          --color-primario: #9D8DFF;
+          --color-secundario: #6F63B0;
+          --color-resaltado: #FBE29D;
+          --color-fondo: #EDEDF0;
+          --color-texto: #3D3D4E;
+          --color-blanco: #FFFFFF;
+        }
+
+        body {
+          font-family: 'Segoe UI', sans-serif;
+          background-color: var(--color-fondo);
+          color: var(--color-texto);
+          margin: 20px;
+        }
+
+        h1 {
+          color: var(--color-primario);
+          text-align: center;
+        }
+
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-top: 20px;
+        }
+
+        th {
+          background-color: var(--color-primario);
+          color: white;
+          padding: 10px;
+          text-align: left;
+        }
+
+        td {
+          padding: 10px;
+          border-bottom: 1px solid #ddd;
+          background-color: var(--color-blanco);
+        }
+
+        tr:nth-child(even) td {
+          background-color: #f6f4ff;
+        }
+
+        .total-row td {
+          font-weight: bold;
+          background-color: var(--color-resaltado);
+        }
+
+        .btn-container {
+          text-align: center;
+          margin-top: 20px;
+        }
+
+        .btn-container button {
+          padding: 10px 20px;
+          margin: 0 10px;
+          border: none;
+          border-radius: 5px;
+          cursor: pointer;
+          font-weight: bold;
+        }
+
+        .btn-print {
+          background-color: var(--color-secundario);
+          color: white;
+        }
+
+        .btn-close {
+          background-color: #ff6b6b;
+          color: white;
+        }
+
+        .btn-print:hover {
+          background-color: #8566e0;
+        }
+
+        .btn-close:hover {
+          background-color: #e44d4d;
+        }
       </style>
     </head>
     <body>
@@ -356,14 +455,14 @@ function mostrarTablaCompleta(amortizacion) {
           </tr>
         </tbody>
       </table>
-      <div style="margin-top: 20px; text-align: center;">
-        <button onclick="window.print()">Imprimir Tabla</button>
-        <button onclick="window.close()">Cerrar</button>
+
+      <div class="btn-container">
+        <button class="btn-print" onclick="window.print()">🖨️ Imprimir</button>
+        <button class="btn-close" onclick="window.close()">❌ Cerrar</button>
       </div>
     </body>
     </html>
   `;
-
 
     ventana.document.write(html);
     ventana.document.close();
@@ -392,4 +491,70 @@ function formatKey(key) {
 }
 
 
-document.addEventListener('DOMContentLoaded', initSimulador);
+function verHistorial() {
+    const historial = obtenerHistorial();
+
+    if (historial.length === 0) {
+        Swal.fire("Sin datos", "No hay simulaciones guardadas en el historial.", "info");
+        return;
+    }
+
+    const rows = historial.map((item, i) => `
+        <tr>
+            <td>${i + 1}</td>
+            <td>$${item.monto.toLocaleString()}</td>
+            <td>${item.plazo} meses</td>
+            <td>${item.tasa}%</td>
+            <td>$${item.totalPagado.toLocaleString()}</td>
+            <td>${item.fechaSimulacion}</td>
+        </tr>
+    `).join('');
+
+    Swal.fire({
+        title: '📂 Historial de Simulaciones',
+        html: `
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Monto</th>
+                            <th>Plazo</th>
+                            <th>Tasa</th>
+                            <th>Total Pagado</th>
+                            <th>Fecha</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>
+        `,
+        width: '80%',
+        confirmButtonText: 'Cerrar'
+    });
+}
+
+
+function vaciarHistorial() {
+    Swal.fire({
+        title: '¿Vaciar historial?',
+        text: 'Se eliminarán todas las simulaciones guardadas.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            localStorage.removeItem('historialPrestamos');
+            Toastify({
+                text: "Historial eliminado",
+                duration: 3000,
+                gravity: "top",
+                position: "right",
+                backgroundColor: "#dc3545"
+            }).showToast();
+        }
+    });
+}

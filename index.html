@@ -1,112 +1,174 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador de Préstamos Avanzado</title>
-    <link rel="stylesheet" href="./css/styles.css">
-</head>
-<body>
-    <div class="container">
-        <h1>Simulador de Préstamos</h1>
-        <p class="intro">Complete los datos del préstamo para calcular cuotas, intereses y generar una tabla de amortización detallada.</p>
-        
-        <form id="prestamo-form">
-            <!-- Monto -->
-            <div class="form-group">
-                <label for="monto">
-                    Monto del préstamo ($)
-                    <span class="tooltip">ℹ️
-                        <span class="tooltiptext">Ingrese el capital que necesita solicitar (ej: 100000 para $100,000)</span>
-                    </span>
-                </label>
-                <input type="number" id="monto" min="1000" step="100" placeholder="Ej: 50000" required>
-            </div>
-            
-            <!-- Plazo -->
-            <div class="form-group">
-                <label for="plazo">
-                    Plazo (meses)
-                    <span class="tooltip">ℹ️
-                        <span class="tooltiptext">Número de cuotas mensuales (12 = 1 año, 60 = 5 años)</span>
-                    </span>
-                </label>
-                <input type="number" id="plazo" min="1" max="360" placeholder="Ej: 24" required>
-            </div>
-            
-            <!-- Tasa de interés -->
-            <div class="form-group">
-                <label for="tasa">
-                    Tasa de interés anual (%)
-                    <span class="tooltip">ℹ️
-                        <span class="tooltiptext">Porcentaje anual que cobra la entidad financiera (ej: 12% para tasa preferencial)</span>
-                    </span>
-                </label>
-                <div class="slider-container">
-                    <input type="range" id="tasa" min="1" max="30" step="0.1" value="10">
-                    <span id="tasa-value">10%</span>
-                </div>
-            </div>
-            
-            <!-- Período de gracia -->
-            <div class="form-group checkbox">
-                <input type="checkbox" id="periodo-gracia">
-                <label for="periodo-gracia">
-                    Período de gracia
-                    <span class="tooltip">ℹ️
-                        <span class="tooltiptext">Los primeros 3 meses solo pagará intereses (útil para emprendedores)</span>
-                    </span>
-                </label>
-            </div>
-            
-            <!-- Seguro -->
-            <div class="form-group">
-                <label for="seguro">
-                    Seguro mensual ($)
-                    <span class="tooltip">ℹ️
-                        <span class="tooltiptext">Costo adicional por seguro de vida/discrecional (ej: 200 para $200/mes)</span>
-                    </span>
-                </label>
-                <input type="number" id="seguro" min="0" step="10" value="0" placeholder="Opcional">
-            </div>
-            
-            <!-- Pago extra -->
-            <div class="form-group">
-                <label for="pago-extra">
-                    Pago extraordinario mensual ($)
-                    <span class="tooltip">ℹ️
-                        <span class="tooltiptext">Abonos adicionales para reducir plazo/intereses (ej: 500 para $500 extra/mes)</span>
-                    </span>
-                </label>
-                <input type="number" id="pago-extra" min="0" step="50" value="0" placeholder="Opcional">
-            </div>
-            
-            <!-- Botones -->
-            <div class="button-group">
-                <button type="submit" class="btn primary">Simular Préstamo</button>
-                <button type="button" id="limpiar-btn" class="btn secondary">Limpiar Datos</button>
-                <button type="button" id="comparar-btn" class="btn">Comparar Escenarios</button>
-            </div>
-        </form>
-        
-        <!-- Resultados -->
-        <div id="resultados">
-            <div class="info-box">
-                <h3>📝 ¿Cómo usar este simulador?</h3>
-                <ol>
-                    <li>Complete <strong>monto</strong>, <strong>plazo</strong> y <strong>tasa de interés</strong> (obligatorios)</li>
-                    <li>Opcional: active <strong>período de gracia</strong> o agregue <strong>pagos extras</strong></li>
-                    <li>Haga clic en <strong>"Simular Préstamo"</strong></li>
-                    <li>Compare diferentes escenarios con <strong>"Comparar"</strong></li>
-                </ol>
-            </div>
-            
-            <div id="resumen-container" class="result-card"></div>
-            <div id="amortizacion-container" class="result-card"></div>
-            <div id="comparacion-container" class="result-card"></div>
-        </div>
-    </div>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Simulador de Préstamos Avanzado</title>
 
-    <script src="./js/app.js"></script>
-</body>
+        <link rel="icon" href="assets/calculadora.png" type="image/png" />   
+
+        <!-- Bootstrap 5 CDN -->
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+            rel="stylesheet" />
+        <script
+            src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+            defer></script>
+
+        <!-- Toastify CSS & JS -->
+        <link rel="stylesheet" type="text/css"
+            href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" />
+        <script src="https://cdn.jsdelivr.net/npm/toastify-js" defer></script>
+
+        <!-- SweetAlert2 -->
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"
+            defer></script>
+
+        <!-- Tu estilo personalizado -->
+        <link rel="stylesheet" href="css/style.css" />
+
+    </head>
+    <body>
+        <div class="container">
+            <div class="text-center mb-3">
+                <img src="assets/calculadora.png" alt="Logo calculadora" width="100" />
+            </div>
+
+            <h1>Simulador de Préstamos</h1>
+            <p class="intro">Complete los datos del préstamo para calcular
+                cuotas, intereses y generar una tabla de amortización
+                detallada.</p>
+
+            <form id="prestamo-form" class="row">
+
+                <!-- Monto -->
+                <div class="col-md-6 mb-3">
+                    <label for="monto" class="form-label">
+                        Monto del préstamo ($)
+                        <span class="tooltip">ℹ️
+                            <span class="tooltiptext">Ingrese el capital que
+                                necesita solicitar (ej: 100000 para
+                                $100,000)</span>
+                        </span>
+                    </label>
+                    <input type="number" id="monto" class="form-control"
+                        min="1000" step="100" placeholder="Ej: 50000"
+                        required />
+                </div>
+
+                <!-- Plazo -->
+                <div class="col-md-6 mb-3">
+                    <label for="plazo" class="form-label">
+                        Plazo (meses)
+                        <span class="tooltip">ℹ️
+                            <span class="tooltiptext">Número de cuotas mensuales
+                                (12 = 1 año, 60 = 5 años)</span>
+                        </span>
+                    </label>
+                    <input type="number" id="plazo" class="form-control" min="1"
+                        max="360" placeholder="Ej: 24" required />
+                </div>
+
+                <!-- Tasa de interés -->
+                <div class="col-md-6 mb-3">
+                    <label for="tasa" class="form-label">
+                        Tasa de interés anual (%)
+                        <span class="tooltip">ℹ️
+                            <span class="tooltiptext">Porcentaje anual que cobra
+                                la entidad financiera (ej: 12% para tasa
+                                preferencial)</span>
+                        </span>
+                    </label>
+                    <div class="d-flex align-items-center gap-3">
+                        <input type="range" id="tasa" class="form-range" min="1"
+                            max="30" step="0.1" value="10">
+                        <span id="tasa-value" class="fw-bold">10%</span>
+                    </div>
+                </div>
+
+                <!-- Período de gracia -->
+                <div class="col-md-6 mb-3 form-check d-flex align-items-center">
+                    <input type="checkbox" class="form-check-input me-2"
+                        id="periodo-gracia">
+                    <label for="periodo-gracia" class="form-check-label">
+                        Período de gracia
+                        <span class="tooltip">ℹ️
+                            <span class="tooltiptext">Los primeros 3 meses solo
+                                pagará intereses (útil para
+                                emprendedores)</span>
+                        </span>
+                    </label>
+                </div>
+
+                <!-- Seguro mensual -->
+                <div class="col-md-6 mb-3">
+                    <label for="seguro" class="form-label">
+                        Seguro mensual ($)
+                        <span class="tooltip">ℹ️
+                            <span class="tooltiptext">Costo adicional por seguro
+                                de vida/discrecional (ej: 200 para
+                                $200/mes)</span>
+                        </span>
+                    </label>
+                    <input type="number" id="seguro" class="form-control"
+                        min="0" step="10" value="0" placeholder="Opcional" />
+                </div>
+
+                <!-- Pago extraordinario -->
+                <div class="col-md-6 mb-3">
+                    <label for="pago-extra" class="form-label">
+                        Pago extraordinario mensual ($)
+                        <span class="tooltip">ℹ️
+                            <span class="tooltiptext">Abonos adicionales para
+                                reducir plazo/intereses (ej: 500 para $500
+                                extra/mes)</span>
+                        </span>
+                    </label>
+                    <input type="number" id="pago-extra" class="form-control"
+                        min="0" step="50" value="0" placeholder="Opcional" />
+                </div>
+
+                <!-- Botones -->
+                <div class="col-12 mt-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-success">Simular
+                        Préstamo</button>
+                    <button type="button" id="limpiar-btn"
+                        class="btn btn-outline-secondary">Limpiar Datos</button>
+                    <button type="button" id="comparar-btn"
+                        class="btn btn-primary">Comparar Escenarios</button>
+                </div>
+
+                <div class="d-flex gap-2 mt-4">
+                    <button type="button" id="ver-historial-btn"
+                        class="btn btn-info">📂 Ver Historial</button>
+                    <button type="button" id="vaciar-historial-btn"
+                        class="btn btn-danger">🗑️ Vaciar Historial</button>
+                </div>
+
+            </form>
+            <!-- Resultados -->
+            <div id="resultados">
+                <div class="info-box">
+                    <h3>📝 ¿Cómo usar este simulador?</h3>
+                    <ol>
+                        <li>Complete <strong>monto</strong>,
+                            <strong>plazo</strong> y <strong>tasa de
+                                interés</strong> (obligatorios)</li>
+                        <li>Opcional: active <strong>período de gracia</strong>
+                            o agregue <strong>pagos extras</strong></li>
+                        <li>Haga clic en
+                            <strong>"Simular Préstamo"</strong></li>
+                        <li>Compare diferentes escenarios con
+                            <strong>"Comparar"</strong></li>
+                    </ol>
+                </div>
+
+                <div id="resumen-container" class="result-card"></div>
+                <div id="amortizacion-container" class="result-card"></div>
+                <div id="comparacion-container" class="result-card"></div>
+            </div>
+        </div>
+
+        <script src="js/app.js"></script>
+    </body>
 </html>
